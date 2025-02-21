@@ -1,0 +1,47 @@
+version: '3.8'
+services:
+  remsoft-product-backend:
+    container_name: remsoft-product-backend
+    build:
+        context: remsoft-product-backend
+        dockerfile: Dockerfile
+    image: remsoft-product-backend:latest
+    ports:
+        - 8080:8080
+    environment:
+          - POSTGRESQL_URL=db
+          - POSTGRESQL_PORT=5432
+          - POSTGRESQL_DATABASE=postgres
+          - POSTGRESQL_USER=postgres
+          - POSTGRESQL_PASSWORD=postgres
+          - SERVER_PORT=8080
+    networks:
+        - spring-cloud-network
+  remsoft-product-frontend:
+    container_name: remsoft-product-frontend
+    build:
+        context: remsoft-product-frontend
+        dockerfile: Dockerfile
+    image: remsoft-product-frontend:latest
+    ports:
+        - 80:80
+    networks:
+        - spring-cloud-network
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    networks:
+        - spring-cloud-network
+volumes:
+  pg-data:
+networks:
+    spring-cloud-network:
+        driver: bridge
