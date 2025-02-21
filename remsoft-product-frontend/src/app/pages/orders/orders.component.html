@@ -1,0 +1,179 @@
+<div class="card" style="min-height: calc(100vh - 115px)">
+  <div class="flex justify-between mb-3">
+    <div class="font-bold text-xl text-primary">Pedidos</div>
+    <p-button icon="pi pi-plus" iconPos="right" label="Novo Pedido" (click)="showSaveDialog()" />
+  </div>
+  <p-divider />
+
+  <p-table [value]="orders()" dataKey="id" [loading]="loading()">
+    <ng-template #header>
+      <tr>
+        <th style="width: 5rem"></th>
+        <th>Numero</th>
+        <th>Comprador</th>
+        <th>Fornecedor</th>
+        <th>Total de produtos comprados</th>
+        <th>Valor Total</th>
+        <th class="w-[10%]">Ações</th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-order let-expanded="expanded">
+      <tr>
+        <td>
+          <p-button type="button" pRipple [pRowToggler]="order" [text]="true" [rounded]="true" [plain]="true" [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" />
+        </td>
+        <td>{{ order.id }}</td>
+        <td>{{ order.nomeComprador }}</td>
+        <td>{{ order.nomeForncedor }}</td>
+        <td>{{ order.itensTotais }}</td>
+        <td>{{ order.valorTotal | currency: 'BRL' }}</td>
+        <td>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <p-button icon="pi pi-pencil" [outlined]="true" (onClick)="showSaveDialog(order.id)" />
+            <p-button icon="pi pi-trash" severity="danger" [outlined]="true" (onClick)="showConfirmDialog(order.id)" />
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template #expandedrow let-order>
+      <tr>
+        <td colspan="6">
+          <div class="p-4">
+            <p-table [value]="order.produtos">
+              <ng-template #header>
+                <tr>
+                  <th>Codigo</th>
+                  <th>Nome</th>
+                  <th>Quantidade</th>
+                  <th>Valor Unitario</th>
+                  <th>Valor Total</th>
+                </tr>
+              </ng-template>
+              <ng-template #body let-product>
+                <tr>
+                  <td>{{ product.produto.id }}</td>
+                  <td>{{ product.produto.nome }}</td>
+                  <td>{{ product.quantidade }}</td>
+                  <td>{{ product.valor | currency: 'BRL' }}</td>
+                  <td>{{ product.valorTotal  | currency: 'BRL' }}</td>
+                </tr>
+              </ng-template>
+              <ng-template pTemplate="emptymessage">
+                <tr>
+                  <td colspan="3">
+                    <p>Nenhum produto encontrado.</p>
+                  </td>
+                </tr>
+              </ng-template>
+            </p-table>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="6">
+          <p>Nenhum pedido encontrado.</p>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<p-dialog header="Confirmação" [(visible)]="confirmationDialog" [style]="{ width: '350px' }" [modal]="true" [draggable]="false" [resizable]="false">
+  <div class="flex items-center justify-center pt-3">
+    <i class="pi pi-exclamation-triangle mr-4" style="font-size: 2rem"> </i>
+    <span>Tem certeza que deseja excluir?</span>
+  </div>
+  <ng-template #footer>
+    <p-button label="Não" (click)="hideConfirmDialog()" text severity="secondary" />
+    <p-button label="Sim" (click)="handleDelete()" severity="danger" outlined autofocus />
+  </ng-template>
+</p-dialog>
+
+<p-dialog (onHide)="formGroup.reset()" [header]="id() ? 'Editar Pedido' : 'Criar Pedido'" [style]="{ width: '90%', maxWidth: '640px' }" [(visible)]="saveDialog" [modal]="true" [draggable]="false" [resizable]="false">
+  <form class="flex flex-col gap-4 pt-2" [formGroup]="formGroup">
+    <div class="w-full">
+      <p-floatlabel variant="on">
+        <input pInputText id="comprador" autocomplete="off" class="w-full" [formControl]="controls.nomeComprador" />
+        <label for="comprador">Comprador</label>
+      </p-floatlabel>
+    </div>
+
+    <div class="flex gap-4 flex-col sm:flex-row">
+      <div class="w-full">
+        <p-floatlabel variant="on">
+          <input pInputText id="fornecedor" autocomplete="off" class="w-full" [formControl]="controls.nomeForncedor" />
+          <label for="fornecedor">Fornecedor</label>
+        </p-floatlabel>
+      </div>
+      <div class="w-full">
+        <p-floatlabel variant="on">
+          <p-inputnumber class="w-full" styleClass="w-full" [formControl]="controls.valorTotal" inputId="valor_total" mode="currency" currency="BRL" locale="pt-BR"  readonly />
+          <label for="valor_total">Valor Total</label>
+        </p-floatlabel>
+      </div>
+    </div>
+
+    @for (product of productsFormArray.controls; track $index) {
+      <div class="flex gap-4 flex-col sm:flex-row">
+        <div class="w-full">
+          <p-floatlabel variant="on">
+            <p-select
+              class="w-full"
+              styleClass="w-full"
+              [options]="products()"
+              emptyMessage="Nenhum produto encontrado"
+              emptyFilterMessage="Nenhum produto encontrado"
+              [formControl]="product.controls.produtoId"
+              appendTo="body"
+              optionLabel="nome"
+              optionValue="id"
+              styleClass="w-full"
+            />
+            <label>Produto</label>
+          </p-floatlabel>
+        </div>
+        <div class="w-full flex gap-3">
+          <div class="w-full">
+            <p-floatlabel variant="on">
+              <p-inputnumber class="w-full" [useGrouping]="false" styleClass="w-full" [formControl]="product.controls.quantidade" />
+              <label>Quantidade</label>
+            </p-floatlabel>
+          </div>
+          <p-button icon="pi pi-times" severity="danger" (onClick)="handleDeleteProduct($index)" />
+        </div>
+      </div>
+    }
+
+    <div class="flex justify-end">
+      <p-button label="Adicionar Produto" (onClick)="handleAddProduct()" />
+    </div>
+
+    <!-- <div>
+      <p-floatlabel variant="on">
+        <p-select
+          class="w-full"
+          styleClass="w-full"
+          id="produtos"
+          [options]="products()"
+          emptyMessage="Nenhum produto encontrado"
+          emptyFilterMessage="Nenhum produto encontrado"
+          [formControl]="controls.produtos"
+          appendTo="body"
+          optionLabel="nome"
+          optionValue="id"
+          styleClass="w-full"
+          display="chip"
+        />
+        <label for="produtos">Produtos</label>
+      </p-floatlabel>
+    </div> -->
+    <div class="flex gap-4 justify-end">
+      <p-button label="Cancelar" severity="danger" (click)="hideSaveDialog()" />
+      <p-button label="Salvar" severity="success" [disabled]="formGroup.invalid" (onClick)="handleSave()" />
+    </div>
+  </form>
+</p-dialog>
+
+<p-toast />
