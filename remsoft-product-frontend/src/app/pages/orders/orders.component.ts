@@ -10,7 +10,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
-import { TableModule } from 'primeng/table';
+import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { ToastModule } from 'primeng/toast';
 import { OrdersService } from '../../../core/services/orders.service';
 import { ProductsService } from '../../../core/services/products.service';
@@ -43,6 +43,7 @@ export class OrdersComponent {
   products = signal<Product[]>([]);
   id = signal<number | undefined>(undefined);
   loading = signal(false);
+  totalRecords = signal(0);
 
   confirmationDialog = false;
   saveDialog = false;
@@ -80,14 +81,25 @@ export class OrdersComponent {
     });
   }
 
-  loadOrders() {
+  loadOrders(event?: TableLazyLoadEvent) {
     this.loading.set(true);
 
+    const params = {
+      page: 0,
+      size: 10,
+    };
+
+    if (event?.first != undefined && event?.rows != undefined) {
+      params.page = event.first / event.rows;
+      params.size = event.rows;
+    }
+
     this.service
-      .load()
+      .load(params.page, params.size)
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe((response) => {
         this.orders.set(response.content);
+        this.totalRecords.set(response.totalElements);
       });
   }
 
@@ -95,7 +107,7 @@ export class OrdersComponent {
     this.loading.set(true);
 
     this.productService
-      .load()
+      .load(0, 1000)
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe((response) => {
         this.products.set(response.content);
@@ -126,6 +138,7 @@ export class OrdersComponent {
           valorTotal: order.valorTotal.toString(),
           //   produtos: order.produtos.map((p) => p.id) as any,
         };
+        console.log;
         this.formGroup.patchValue(dto);
       }
       this.id.set(id);
@@ -151,10 +164,16 @@ export class OrdersComponent {
     this.service
       .save(this.formGroup?.value as any, this.id())
       .pipe(finalize(() => this.loading.set(false)))
-      .subscribe(() => {
-        this.messageService.add({ severity: 'success', summary: `Pedido ${this.id() ? 'editado' : 'criado'} com sucesso!` });
-        this.loadOrders();
-        this.hideSaveDialog();
+      .subscribe({
+        next: () => {
+          this.messageService.add({ severity: 'success', summary: `Pedido ${this.id() ? 'editado' : 'criado'} com sucesso!` });
+          this.loadOrders();
+          this.hideSaveDialog();
+        },
+        error: (error) => {
+          console.log('errror' + error);
+          this.messageService.add({ severity: 'error', summary: error.error.userMessage });
+        },
       });
   }
 
@@ -163,10 +182,16 @@ export class OrdersComponent {
     this.service
       .delete(this.id()!)
       .pipe(finalize(() => this.loading.set(false)))
-      .subscribe(() => {
-        this.messageService.add({ severity: 'success', summary: 'Pedido deletado com sucesso!' });
-        this.loadOrders();
-        this.hideConfirmDialog();
+      .subscribe({
+        next: () => {
+          this.messageService.add({ severity: 'success', summary: 'Pedido deletado com sucesso!' });
+          this.loadOrders();
+          this.hideConfirmDialog();
+        },
+        error: (error) => {
+          console.log('errror' + error);
+          this.messageService.add({ severity: 'error', summary: error.error.userMessage });
+        },
       });
   }
 

@@ -1,19 +1,20 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { take } from 'rxjs';
+import { environment } from '../../environments/environment';
 import { PaginatedData } from '../types/common.types';
 import { Product } from '../types/products.types';
 
 @Injectable({ providedIn: 'root' })
 export class ProductsService {
   httpClient = inject(HttpClient);
-  resourceUrl = 'http://localhost:8080/produto';
+  resourceUrl = `${environment.apiUrl}/produto`;
 
-  load() {
+  load(page = 0, size = 20) {
     return this.httpClient.get<PaginatedData<Product>>(this.resourceUrl, {
       params: {
-        page: 0,
-        size: 1000,
+        page,
+        size,
       },
     });
   }

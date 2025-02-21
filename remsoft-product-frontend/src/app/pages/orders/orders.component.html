@@ -5,7 +5,7 @@
   </div>
   <p-divider />
 
-  <p-table [value]="orders()" dataKey="id" [loading]="loading()">
+  <p-table [paginator]="true" [rows]="10" [totalRecords]="totalRecords()" [lazy]="true" [lazyLoadOnInit]="true" (onPage)="loadOrders($event)" [rowsPerPageOptions]="[1, 10, 20, 50]" [value]="orders()" dataKey="id" [loading]="loading()">
     <ng-template #header>
       <tr>
         <th style="width: 5rem"></th>
@@ -50,17 +50,17 @@
                 </tr>
               </ng-template>
               <ng-template #body let-product>
-                <tr>
+                <tr colspan="7">
                   <td>{{ product.produto.id }}</td>
                   <td>{{ product.produto.nome }}</td>
                   <td>{{ product.quantidade }}</td>
                   <td>{{ product.valor | currency: 'BRL' }}</td>
-                  <td>{{ product.valorTotal  | currency: 'BRL' }}</td>
+                  <td>{{ product.valorTotal | currency: 'BRL' }}</td>
                 </tr>
               </ng-template>
               <ng-template pTemplate="emptymessage">
                 <tr>
-                  <td colspan="3">
+                  <td colspan="7">
                     <p>Nenhum produto encontrado.</p>
                   </td>
                 </tr>
@@ -109,7 +109,7 @@
       </div>
       <div class="w-full">
         <p-floatlabel variant="on">
-          <p-inputnumber class="w-full" styleClass="w-full" [formControl]="controls.valorTotal" inputId="valor_total" mode="currency" currency="BRL" locale="pt-BR"  readonly />
+          <p-inputnumber class="w-full" styleClass="w-full" [formControl]="controls.valorTotal" inputId="valor_total" mode="currency" currency="BRL" locale="pt-BR" readonly />
           <label for="valor_total">Valor Total</label>
         </p-floatlabel>
       </div>
@@ -150,25 +150,6 @@
       <p-button label="Adicionar Produto" (onClick)="handleAddProduct()" />
     </div>
 
-    <!-- <div>
-      <p-floatlabel variant="on">
-        <p-select
-          class="w-full"
-          styleClass="w-full"
-          id="produtos"
-          [options]="products()"
-          emptyMessage="Nenhum produto encontrado"
-          emptyFilterMessage="Nenhum produto encontrado"
-          [formControl]="controls.produtos"
-          appendTo="body"
-          optionLabel="nome"
-          optionValue="id"
-          styleClass="w-full"
-          display="chip"
-        />
-        <label for="produtos">Produtos</label>
-      </p-floatlabel>
-    </div> -->
     <div class="flex gap-4 justify-end">
       <p-button label="Cancelar" severity="danger" (click)="hideSaveDialog()" />
       <p-button label="Salvar" severity="success" [disabled]="formGroup.invalid" (onClick)="handleSave()" />

@@ -8,7 +8,7 @@ import { DividerModule } from 'primeng/divider';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
-import { TableModule } from 'primeng/table';
+import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { ToastModule } from 'primeng/toast';
 import { finalize } from 'rxjs';
 import { ProductsService } from '../../../core/services/products.service';
@@ -34,6 +34,7 @@ export class ProductsComponent implements OnInit {
   products = signal<Product[]>([]);
   id = signal<number | undefined>(undefined);
   loading = signal(false);
+  totalRecords = signal(0);
 
   confirmationDialog = false;
   saveDialog = false;
@@ -52,14 +53,26 @@ export class ProductsComponent implements OnInit {
     });
   }
 
-  loadProducts() {
+  loadProducts(event?: TableLazyLoadEvent) {
     this.loading.set(true);
 
+    const params = {
+      page: 0,
+      size: 10,
+    };
+
+    if (event?.first != undefined && event?.rows != undefined) {
+      params.page = event.first / event.rows;
+      params.size = event.rows;
+    }
+
     this.service
-      .load()
+      .load(params.page, params.size)
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe((response) => {
+        this.totalRecords.set(response.totalElements);
         this.products.set(response.content);
+        console.log(this.totalRecords());
       });
   }
 
@@ -97,10 +110,15 @@ export class ProductsComponent implements OnInit {
     this.service
       .save(this.formGroup?.value as any, this.id())
       .pipe(finalize(() => this.loading.set(false)))
-      .subscribe(() => {
-        this.messageService.add({ severity: 'success', summary: `Produto ${this.id() ? 'editado' : 'criado'} com sucesso!` });
-        this.loadProducts();
-        this.hideSaveDialog();
+      .subscribe({
+        next: () => {
+          this.messageService.add({ severity: 'success', summary: `Produto ${this.id() ? 'editado' : 'criado'} com sucesso!` });
+          this.loadProducts();
+          this.hideSaveDialog();
+        },
+        error: (error) => {
+          this.messageService.add({ severity: 'error', summary: error.error.userMessage });
+        },
       });
   }
 
@@ -109,10 +127,15 @@ export class ProductsComponent implements OnInit {
     this.service
       .delete(this.id()!)
       .pipe(finalize(() => this.loading.set(false)))
-      .subscribe(() => {
-        this.messageService.add({ severity: 'success', summary: 'Produto deletado com sucesso!' });
-        this.loadProducts();
-        this.hideConfirmDialog();
+      .subscribe({
+        next: () => {
+          this.messageService.add({ severity: 'success', summary: 'Produto deletado com sucesso!' });
+          this.loadProducts();
+          this.hideConfirmDialog();
+        },
+        error: (error) => {
+          this.messageService.add({ severity: 'error', summary: error.error.userMessage });
+        },
       });
   }
 

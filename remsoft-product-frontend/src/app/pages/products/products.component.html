@@ -4,10 +4,11 @@
     <p-button icon="pi pi-plus" iconPos="right" label="Novo Produto" (click)="showSaveDialog()" />
   </div>
   <p-divider />
-  <p-table [value]="products()" dataKey="id" [loading]="loading()">
+
+  <p-table [paginator]="true" [rows]="10" [totalRecords]="totalRecords()" [lazy]="true" [lazyLoadOnInit]="true" (onPage)="loadProducts($event)" [rowsPerPageOptions]="[1, 10, 20, 50]" [value]="products()" dataKey="id" [loading]="loading()">
     <ng-template #header>
       <tr>
-        <th>Nome</th>
+        <th class="w-[50%]">Nome</th>
         <th>Preço</th>
         <th class="w-[10%]">Ações</th>
       </tr>

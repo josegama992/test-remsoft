@@ -3,17 +3,18 @@ import { inject, Injectable } from '@angular/core';
 import { take } from 'rxjs';
 import { PaginatedData } from '../types/common.types';
 import { Order } from '../types/orders.types';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class OrdersService {
   httpClient = inject(HttpClient);
-  resourceUrl = 'http://localhost:8080/pedido';
+  resourceUrl = `${environment.apiUrl}/pedido`  
 
-  load() {
+  load(page = 0, size = 20) {
     return this.httpClient.get<PaginatedData<Order>>(this.resourceUrl, {
       params: {
-        page: 0,
-        size: 1000,
+        page,
+        size,
       },
     });
   }
